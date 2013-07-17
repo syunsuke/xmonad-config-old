@@ -1,0 +1,17 @@
+background no
+out_to_console yes
+out_to_x no
+# Update interval in seconds
+update_interval 1
+
+TEXT
+^i(/home/neko/.xmonad/icon/cpu.xbm) ^fg(\#ffffff)${cpu}%^fg()   \
+^i(/home/neko/.xmonad/icon/mem.xbm) ^fg(\#ffffff)${memperc}%^fg()   \
+^i(/home/neko/.xmonad/icon/wifi_01.xbm) ${wireless_essid wlan0} \
+(^i(/home/neko/.xmonad/icon/net_down_01.xbm) ^fg(\#00aa4a)${downspeedf wlan0}^fg() \
+^i(/home/neko/.xmonad/icon/net_up_01.xbm) ^fg(\#ff3333)${upspeedf wlan0}^fg() )  \
+^i(/home/neko/.xmonad/icon/bat_full_01.xbm) ^fg(\#ffffff)${battery_percent BAT0}^fg() \
+^fg(\#ebac54) ${time %Y-%m-%d}  ${time %R}^fg() \
+    \
+
+
