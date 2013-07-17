@@ -1,0 +1,16 @@
+background no
+out_to_console yes
+out_to_x no
+# Update interval in seconds
+update_interval 1
+
+TEXT
+^i(/home/neko/.xmonad/icon/cpu.xbm) ^fg(\#ffffff)${cpu}%^fg() | \
+^i(/home/neko/.xmonad/icon/mem.xbm) ^fg(\#ffffff)${memperc}%^fg() | \
+^i(/home/neko/.xmonad/icon/net_wired.xbm)${addr eth0} \
+^i(/home/neko/.xmonad/icon/net_down_01.xbm) ^fg(\#00aa4a)${downspeedf eth0}^fg() \
+^i(/home/neko/.xmonad/icon/net_up_01.xbm) ^fg(\#ff3333)${upspeedf eth0}^fg() | \
+^i(/home/neko/.xmonad/icon/clock.xbm)^fg(\#FFFFFF) ${time %Y %m/%d} ^fg(\#ebac54)${time %R} \
+    \
+
+
