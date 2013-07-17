@@ -100,8 +100,14 @@ main = do
 
     -- 分割部分の位置
     myStatusLength host =
-      case host of Desktop -> "900"
-                   _       -> "400"
+      case host of Desktop -> 900
+                   _       -> 400
+
+
+    myStatusStartPoint host =
+      case host of Desktop -> 1280
+                   _       -> 0
+   
 
     -- ステータスバーの高さとフォント
     myDzenStyle host  =
@@ -114,15 +120,15 @@ main = do
                    _       ->  "conky_dzen_laptop"
 
     -- 以下共通
-    myDzenStatus host = "dzen2 -x 0 -w "
-                        ++ (myStatusLength host)
+    myDzenStatus host = "dzen2 -x " ++ show (myStatusStartPoint host)
+                        ++ " -w " ++ show (myStatusLength host)
                         ++ " -ta 'l'"
                         ++ (myDzenStyle host)
 
     myConkyStatus host = "conky -c ~/.xmonad/"
                          ++ (myconkyrc host)
                          ++ " | dzen2  -x "
-                         ++ (myStatusLength host)
+                         ++ show ((myStatusStartPoint host) + (myStatusLength host))
                          ++" -ta r " ++ (myDzenStyle host)
 
 -- Bascic Config ------------------------------------------------------
@@ -208,15 +214,20 @@ myTopicConfig host = defaultTopicConfig
 edit :: String -> X ()
 edit = spawn . ("emacs --no-splash "++)
 
---delay :: X ()
---delay = io (threadDelay 0)
 
 goto :: Host -> Topic -> X ()
---goto host t = delay >> switchTopic (myTopicConfig host) t
 goto host t = switchTopic (myTopicConfig host) t
 
 promptedGoto :: Host -> X ()
 promptedGoto = workspacePrompt myXPConfig . goto
+
+promptedGotoOtherScreen :: Host -> X ()
+promptedGotoOtherScreen host =
+  workspacePrompt myXPConfig $ \ws -> do            -- (27)
+    nextScreen
+    goto host ws
+
+
 
 promptedShift :: X ()
 promptedShift = workspacePrompt myXPConfig $ windows . W.shift
@@ -370,6 +381,7 @@ myKeymap host conf =
    | (i,k) <- zip (XMonad.workspaces conf) "1234567890"
    , (f,m) <- [(goto',"")
               ,(windows . W.shift, "S-")
+              ,(\ws -> nextScreen >> (goto' $ ws), "C-")
               ]
   ]
   ++
@@ -378,18 +390,21 @@ myKeymap host conf =
   [
     -- workspace,topicspase移動
     ("M-g",   promptedGoto host)
+  , ("M-C-g", promptedGotoOtherScreen host)
   , ("M-S-g", promptedShift)
   , ("M-S-C-g", workspacePrompt myXPConfig $
                 \ws -> withAll' (W.shiftWin ws) >> goto host ws)
 
+  , ("M-w", screenWorkspace 1 >>= flip whenJust (windows . W.view))
+  , ("M-e", screenWorkspace 0 >>= flip whenJust (windows . W.view))
+  , ("M-s", nextScreen)
+
   , ("M-b",  toggleWS' ["NSP"])
-  , ("M-m",  DO.moveTo Next NonEmptyWS)
-  , ("M-n",  DO.moveTo Prev NonEmptyWS)
-  , ("M-C-<R>",  DO.moveTo Next NonEmptyWS)
-  , ("M-C-<L>",  DO.moveTo Prev NonEmptyWS)
+  , ("M-m",  DO.moveTo Next HiddenNonEmptyWS)
+  , ("M-n",  DO.moveTo Prev HiddenNonEmptyWS)
+  , ("M-C-<R>",  DO.moveTo Next HiddenNonEmptyWS)
+  , ("M-C-<L>",  DO.moveTo Prev HiddenNonEmptyWS)
 
-
-    
     -- window navigation keybindings.
   , ("M-<R>" , sendMessage $ Go R)
   , ("M-<L>" , sendMessage $ Go L)
@@ -424,11 +439,11 @@ myKeymap host conf =
   , ("S-C-<KP_Up>"   , sendMessage $ Move U)
   , ("S-C-<KP_Down>" , sendMessage $ Move D)
 
-  , ("<KP_Page_Down>",  DO.moveTo Next NonEmptyWS)
-  , ("<KP_End>"      ,  DO.moveTo Prev NonEmptyWS)
+  , ("<KP_Page_Down>",  DO.moveTo Next HiddenNonEmptyWS)
+  , ("<KP_End>"      ,  DO.moveTo Prev HiddenNonEmptyWS)
 
-  , ("<KP_Page_Up>"   ,  windows W.focusDown)
-  , ("<KP_Home>"      ,  windows W.focusUp)
+  , ("<KP_Page_Up>"   ,  swapNextScreen)
+  , ("<KP_Home>"      ,  shiftNextScreen)
 
   , ("<KP_Begin>"      , windows W.focusMaster)
 
@@ -445,7 +460,7 @@ myKeymap host conf =
   , ("M-C-y", sendMessage $ Toggle REFLECTY)
   , ("M-C-m", sendMessage $ Toggle MIRROR)
   , ("M-C-b", sendMessage $ Toggle NOBORDERS)
-  , ("M-C-g", sendMessage $ ToggleGaps)
+--  , ("M-C-g", sendMessage $ ToggleGaps)
 
   , ("M-<Print>",       sendMessage $ Toggle REFLECTX)  --another key
   , ("M-<Scroll_lock>", sendMessage $ Toggle REFLECTY)  --another key
