@@ -177,9 +177,8 @@ data TopicItem = TI { topicName :: Topic
 myTopics :: Host -> [TopicItem]
 myTopics host =
   [ti "home"         ""
-  , TI "web"         ""         (spawn "chromium")
-  , TI "navi2ch"     ""         (spawn "emacs -f navi2ch"
-                                 >> spawn "firefox")
+  , TI "web"         ""         (spawn "firefox")
+  , TI "navi2ch"     ""         (spawn "emacs -f navi2ch")
   , TI "v2c"         ""         (spawn "local/v2c/v2c")
   , TI "xm-conf"     ".xmonad"  (edit "~/.xmonad/xmonad.hs"
                                  >> spawn "firefox --new-window http://www.xmonad.org")
@@ -258,11 +257,13 @@ myManageHook host = manageDocks <+>
                where
                  myCenterFloats = [ "feh"
                                   , "Xmessage"
-                                  , "gnome-search-tool"
-                                  ]
-                 myFloats       = [ "xev"
-                                  , "MPlayer"
                                   , "Gimp"
+                                  , "Nitrogen"
+                                  , "gnome-search-tool"
+                                  , "MPlayer"
+                                  , "Eog"
+                                  , "xev"                                  ]
+                 myFloats       = [ 
                                   ]
 
 --- scratchpad --------------------------------------------------------
@@ -325,20 +326,19 @@ myLayoutHook host =
   smartBorders $
 
   onWorkspaces ["xm-conf"] (myEditorLayout ||| myTiled) $
-  onWorkspace "navi2ch" (myNavi2Layout ||| Full) $
 
   myTiled |||
   Mag.magnifier Grid |||
-  (TwoPane (3/100) (1/2)) |||
-  (renamed[Replace "Full|Acc"] $ combineTwo myTiled Full Accordion)
+  Full
+
 
 myTiled = renamed[Replace "Tall"]  $ spacing 3 $ Tall 1 0.03 0.6
 
-myEditorLayout = renamed[Replace "emacs|tab"] $
+myEditorLayout = renamed[Replace "emacs|grid"] $
                combineTwoP
-               (spacing 3 $ TwoPane 0.03 0.53)
+               (spacing 3 $ TwoPane 0.03 0.55)
                (simpleTabbed)
-               (simpleTabbed)
+               (Mag.magnifier Grid)
                (ClassName  "Emacs")
 
 myNavi2Layout = renamed[Replace "navi2ch|mag"] $
@@ -388,7 +388,7 @@ myKeymap host conf =
 
   -- 制御系
   [
-    -- workspace,topicspase移動
+    -- workspace,topicspace移動
     ("M-g",   promptedGoto host)
   , ("M-C-g", promptedGotoOtherScreen host)
   , ("M-S-g", promptedShift)
@@ -404,6 +404,9 @@ myKeymap host conf =
   , ("M-n",  DO.moveTo Prev HiddenNonEmptyWS)
   , ("M-C-<R>",  DO.moveTo Next HiddenNonEmptyWS)
   , ("M-C-<L>",  DO.moveTo Prev HiddenNonEmptyWS)
+
+  , ("M-<Page_Down>",  DO.moveTo Next EmptyWS)
+  , ("M-<Page_Up>",  DO.moveTo Prev EmptyWS)
 
     -- window navigation keybindings.
   , ("M-<R>" , sendMessage $ Go R)
