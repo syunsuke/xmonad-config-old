@@ -165,6 +165,64 @@ myxmonadConfig h host =
     `additionalKeysP` (myKeys h host)
 
 
+--- my Layout customize --------------------------------------------------
+
+myLayoutHook host =
+
+  avoidStruts $
+
+  gaps (zip [U,D,L,R] (repeat 3)) $
+
+  configurableNavigation (navigateColor myNaviColor) $
+
+  mkToggle1 NBFULL $
+  mkToggle1 REFLECTX $
+  mkToggle1 REFLECTY $
+  mkToggle1 NOBORDERS $
+  mkToggle1 MIRROR $
+
+  smartBorders $
+
+  onWorkspaces ["xm-conf"] (myEditorLayout ||| myTiled) $
+
+  myTiled |||
+  Mag.magnifier Grid |||
+  Full
+
+
+myTiled = renamed[Replace "Tall"]  $ spacing 3 $ Tall 1 0.03 0.6
+
+myEditorLayout = renamed[Replace "emacs|grid"] $
+               combineTwoP
+               (spacing 3 $ TwoPane 0.03 0.55)
+               (simpleTabbed)
+               (Mag.magnifier Grid)
+               (ClassName  "Emacs")
+
+myNavi2Layout = renamed[Replace "navi2ch|mag"] $
+                Mag.magnifier $ 
+                combineTwoP
+               (spacing 3 $ TwoPane 0.03 (3/4))
+               (simpleTabbed)
+               (Mag.magnifier Grid)
+               (ClassName  "Emacs")
+
+
+wwwcomboL  = renamed[Replace "www_L"] $
+             combineTwoP
+             ( spacing 3 $ TwoPane 0.03 0.60)
+             (simpleTabbed)
+             (simpleTabbed)
+             (ClassName  "Chromium" `Or` ClassName  "Firefox")
+
+wwwcomboU  = renamed[Replace "www_U"] $
+             combineTwoP
+             ( Mirror $ spacing 3 $ TwoPane 0.03 0.70)
+             (simpleTabbed) (simpleTabbed)
+             (ClassName  "Chromium" `Or` ClassName  "Firefox")
+
+
+
 -- Workspace(Topicspace) -------------------------------------------------------
 -- From Brent Yorgey's darcs xmonad.hs
 
@@ -179,11 +237,22 @@ myTopics host =
   [ti "home"         ""
   , TI "web"         ""         (spawn "firefox")
   , TI "navi2ch"     ""         (spawn "emacs -f navi2ch")
+  , TI "music"       ""         (runInTerm "" "mocp")
   , TI "v2c"         ""         (spawn "local/v2c/v2c")
   , TI "xm-conf"     ".xmonad"  (edit "~/.xmonad/xmonad.hs"
                                  >> spawn "firefox --new-window http://www.xmonad.org")
   , TI "irc"         ""         (spawn "xchat")
-  , ti "NSP"         ""
+  ]
+  ++
+
+  case host of
+    Desktop -> [
+               ]
+    _       -> [
+               ]
+
+  ++
+  [ ti "NSP"         ""
   ]
   where
     ti t d = TI t d shell
@@ -273,12 +342,13 @@ scratchpadSize host = case host of
 
 mySPFloat host = customFloating $ scratchpadSize host
 
-customTerm = "urxvt -depth 32 -bg '[90]#003f3f' "
+customTerm1 = "urxvt -depth 32 -bg '[85]#003f3f' "
+customTerm2 = "urxvt -depth 32 -bg '[85]#3f003f' "
 --customTerm = "urxvt "
 
 scratchpads host =
-  [ NS "s_term1" (customTerm ++ "-title s_term1") (title =? "s_term1") (mySPFloat host)
-  , NS "s_term2" (customTerm ++ "-title s_term2") (title =? "s_term2") defaultFloating
+  [ NS "s_term1" (customTerm1 ++ "-title s_term1") (title =? "s_term1") (mySPFloat host)
+  , NS "s_term2" (customTerm2 ++ "-title s_term2") (title =? "s_term2") defaultFloating
   ]
 
 
@@ -304,64 +374,6 @@ myLogHook h host = dynamicLogWithPP $ defaultPP {
     myshorten host =
       case host of Desktop ->  shorten 50
                    _       ->  shorten 30
-
-
-
---- my Layout customize --------------------------------------------------
-
-myLayoutHook host =
-
-  avoidStruts $
-
-  gaps (zip [U,D,L,R] (repeat 3)) $
-
-  configurableNavigation (navigateColor myNaviColor) $
-
-  mkToggle1 NBFULL $
-  mkToggle1 REFLECTX $
-  mkToggle1 REFLECTY $
-  mkToggle1 NOBORDERS $
-  mkToggle1 MIRROR $
-
-  smartBorders $
-
-  onWorkspaces ["xm-conf"] (myEditorLayout ||| myTiled) $
-
-  myTiled |||
-  Mag.magnifier Grid |||
-  Full
-
-
-myTiled = renamed[Replace "Tall"]  $ spacing 3 $ Tall 1 0.03 0.6
-
-myEditorLayout = renamed[Replace "emacs|grid"] $
-               combineTwoP
-               (spacing 3 $ TwoPane 0.03 0.55)
-               (simpleTabbed)
-               (Mag.magnifier Grid)
-               (ClassName  "Emacs")
-
-myNavi2Layout = renamed[Replace "navi2ch|mag"] $
-                Mag.magnifier $ 
-                combineTwoP
-               (spacing 3 $ TwoPane 0.03 (3/4))
-               (simpleTabbed)
-               (Mag.magnifier Grid)
-               (ClassName  "Emacs")
-
-
-wwwcomboL  = renamed[Replace "www_L"] $
-             combineTwoP
-             ( spacing 3 $ TwoPane 0.03 0.60)
-             (simpleTabbed)
-             (simpleTabbed)
-             (ClassName  "Chromium" `Or` ClassName  "Firefox")
-
-wwwcomboU  = renamed[Replace "www_U"] $
-             combineTwoP
-             ( Mirror $ spacing 3 $ TwoPane 0.03 0.70)
-             (simpleTabbed) (simpleTabbed)
-             (ClassName  "Chromium" `Or` ClassName  "Firefox")
 
 
 
@@ -445,7 +457,8 @@ myKeymap host conf =
   , ("<KP_Page_Down>",  DO.moveTo Next HiddenNonEmptyWS)
   , ("<KP_End>"      ,  DO.moveTo Prev HiddenNonEmptyWS)
 
-  , ("<KP_Page_Up>"   ,  swapNextScreen)
+  , ("<KP_Page_Up>"   ,  swapNextScreen
+                         >> screenWorkspace 0 >>= flip whenJust (windows . W.view))
   , ("<KP_Home>"      ,  shiftNextScreen)
 
   , ("<KP_Begin>"      , windows W.focusMaster)
@@ -491,9 +504,11 @@ myKeymap host conf =
   ]
   ++
 
-  -- 終了用とか
+  -- その他
   [ ("M-S-c", kill)
   , ("M-S-C-c", killAll)
+    -- リロード毎にconky等が増えていくのを防ぐ
+  , ("M-q", spawn "killall dzen2; xmonad --recompile; xmonad --restart")
   ]
 
   where goto' = goto host
