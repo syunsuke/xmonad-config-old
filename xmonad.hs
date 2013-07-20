@@ -237,10 +237,10 @@ myTopics host =
   [ti "home"         ""
   , TI "web"         ""         (spawn "firefox")
   , TI "navi2ch"     ""         (spawn "emacs -f navi2ch")
-  , TI "music"       ""         (runInTerm "" "mocp")
-  , TI "v2c"         ""         (spawn "local/v2c/v2c")
   , TI "xm-conf"     ".xmonad"  (edit "~/.xmonad/xmonad.hs"
                                  >> spawn "firefox --new-window http://www.xmonad.org")
+  , TI "music"       ""         (runInTerm "" "mocp")
+  , TI "v2c"         ""         (spawn "local/v2c/v2c")
   , TI "irc"         ""         (spawn "xchat")
   ]
   ++
@@ -321,7 +321,10 @@ myManageHook host = manageDocks <+>
                [ className =? c --> doCenterFloat | c <- myCenterFloats ]
 
                ++
-               [ className =? c --> doFloat       | c <- myFloats  ]))
+               [ className =? c --> doFloat       | c <- myFloats  ]
+
+               ++
+               [ role =? "GtkFileChooserDialog" --> doCenterFloat]))
 
                where
                  myCenterFloats = [ "feh"
@@ -331,9 +334,12 @@ myManageHook host = manageDocks <+>
                                   , "gnome-search-tool"
                                   , "MPlayer"
                                   , "Eog"
+                                  , "Uim-pref-gtk"
+                                  , "Uim-pref-gtk3"
                                   , "xev"                                  ]
                  myFloats       = [ 
                                   ]
+                 role = stringProperty "WM_WINDOW_ROLE"
 
 --- scratchpad --------------------------------------------------------
 scratchpadSize host = case host of
