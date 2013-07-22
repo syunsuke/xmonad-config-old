@@ -11,12 +11,12 @@ import XMonad
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
-import Data.List ((\\), find)
+import Data.List --((\\), find)
 import Data.Maybe (isJust, catMaybes)
 import Data.Monoid
 import System.Posix.Unistd
 --import Control.Concurrent (threadDelay)
---import Control.Monad (when)
+import Control.Monad (when)
 import XMonad.ManageHook
 
 -- Hooks -----------------------------------------------------
@@ -59,6 +59,7 @@ import qualified XMonad.Actions.DynamicWorkspaceOrder as DO
 
 -- Prompts ---------------------------------------------------
 import XMonad.Prompt
+import XMonad.Prompt.Input
 import XMonad.Prompt.Workspace
 
 -- Utilities -------------------------------------------------
@@ -240,6 +241,7 @@ myTopics host =
   , TI "xm-conf"     ".xmonad"  (edit "~/.xmonad/xmonad.hs"
                                  >> spawn "firefox --new-window http://www.xmonad.org")
   , TI "music"       ""         (runInTerm "" "mocp")
+  , TI "youtube"     ""         (spawn "firefox --new-window http://www.youtube.com/?gl=JP&hl=ja")
   , TI "v2c"         ""         (spawn "local/v2c/v2c")
   , TI "irc"         ""         (spawn "xchat")
   ]
@@ -426,6 +428,13 @@ myKeymap host conf =
   , ("M-<Page_Down>",  DO.moveTo Next EmptyWS)
   , ("M-<Page_Up>",  DO.moveTo Prev EmptyWS)
 
+    -- dynamic workspace bindings
+  , ("M-d c",  newCodeWS)
+  , ("M-d n", addWorkspacePrompt myXPConfig)
+  , ("M-d r", renameWorkspace myXPConfig)
+  , ("M-d d", myremoveWorkspace)
+  , ("M-d z", killAll >> removeWorkspace)
+
     -- window navigation keybindings.
   , ("M-<R>" , sendMessage $ Go R)
   , ("M-<L>" , sendMessage $ Go L)
@@ -518,6 +527,36 @@ myKeymap host conf =
   ]
 
   where goto' = goto host
+
+
+-- Find the first empty workspace named "code<i>" for <i> some integer,
+-- or create a new one
+newCodeWS :: X ()
+newCodeWS = withWindowSet $ \w -> do
+  let wss = W.workspaces w
+      cws = map W.tag $ filter (\ws -> "code" `isPrefixOf` W.tag ws && isJust (W.stack ws)) wss
+      num = head $ [0..] \\ catMaybes (map (readMaybe . drop 4) cws)
+      new = "code" ++ show num
+  when (not $ new `elem` (map W.tag wss)) $ addWorkspace new
+  windows $ W.view new
+ where readMaybe s = case reads s of
+                       [(r,_)] -> Just r
+                       _       -> Nothing
+
+
+--myremoveWorkspace = removeWorkspace
+myremoveWorkspace =
+  removeEmptyWorkspaceAfterExcept except ( DO.moveTo Next HiddenNonEmptyWS)
+  where
+    except = ["home"
+             ,"web"
+             ,"navi2ch"
+             ,"xm-conf"
+             ,"music"
+             ,"youtube"
+             ,"v2c"
+             ,"irc"
+             ]
 
 
 -- (29) Focus follows mouse only for Gimp windows
