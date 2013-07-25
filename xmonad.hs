@@ -184,7 +184,7 @@ myLayoutHook host =
 
   smartBorders $
 
-  onWorkspaces ["xm-conf"] (myEditorLayout ||| myTiled) $
+  onWorkspaces ["xm-conf"] (myTiled ||| myEditorLayout) $
 
   myTiled |||
   Mag.magnifier Grid |||
@@ -236,14 +236,14 @@ data TopicItem = TI { topicName :: Topic
 myTopics :: Host -> [TopicItem]
 myTopics host =
   [ti "home"         ""
-  , TI "web"         ""         (spawn "firefox")
-  , TI "navi2ch"     ""         (spawn "emacs -f navi2ch")
-  , TI "xm-conf"     ".xmonad"  (edit "~/.xmonad/xmonad.hs"
-                                 >> spawn "firefox --new-window http://www.xmonad.org")
-  , TI "music"       ""         (runInTerm "" "mocp")
-  , TI "youtube"     ""         (spawn "firefox --new-window http://www.youtube.com/?gl=JP&hl=ja")
-  , TI "v2c"         ""         (spawn "local/v2c/v2c")
-  , TI "irc"         ""         (spawn "xchat")
+  , TI "web"         ""           (spawn "firefox")
+  , TI "navi2ch"     ""           (spawn "emacs -f navi2ch")
+  , TI "xm-conf"     ".xmonad"    (edit "~/.xmonad/xmonad.hs"
+                                   >> spawn "firefox http://www.xmonad.org")
+  , TI "music"       "data/Music" (spawn "urxvt -e mocp")
+  , TI "youtube"     ""           (spawn "firefox --new-window http://www.youtube.com/?gl=JP&hl=ja")
+  , TI "v2c"         ""           (spawn "local/v2c/v2c")
+  , TI "irc"         ""           (spawn "xchat")
   ]
   ++
 
@@ -335,6 +335,7 @@ myManageHook host = manageDocks <+>
                                   , "Nitrogen"
                                   , "gnome-search-tool"
                                   , "MPlayer"
+                                  , "Smplayer"
                                   , "Eog"
                                   , "Uim-pref-gtk"
                                   , "Uim-pref-gtk3"
@@ -350,8 +351,8 @@ scratchpadSize host = case host of
 
 mySPFloat host = customFloating $ scratchpadSize host
 
-customTerm1 = "urxvt -depth 32 -bg '[85]#003f3f' "
-customTerm2 = "urxvt -depth 32 -bg '[85]#3f003f' "
+customTerm1 = "urxvt -depth 32 -bg '[90]#003f3f' "
+customTerm2 = "urxvt -depth 32 -bg '[90]#3f003f' "
 --customTerm = "urxvt "
 
 scratchpads host =
@@ -490,7 +491,8 @@ myKeymap host conf =
   , ("M-C-x", sendMessage $ Toggle REFLECTX)
   , ("M-C-y", sendMessage $ Toggle REFLECTY)
   , ("M-C-m", sendMessage $ Toggle MIRROR)
-  , ("M-C-b", sendMessage $ Toggle NOBORDERS)
+  , ("M-C-b", (sendMessage $ Toggle NOBORDERS)
+              >> (sendMessage $ ToggleGaps))
 --  , ("M-C-g", sendMessage $ ToggleGaps)
 
   , ("M-<Print>",       sendMessage $ Toggle REFLECTX)  --another key
